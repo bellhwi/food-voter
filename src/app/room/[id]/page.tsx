@@ -61,11 +61,26 @@ function SubmissionForm({ roomId }: { roomId: string }) {
   )
 }
 
+async function getVotes(roomId: string) {
+  const client = await clientPromise
+  const db = client.db('foodvoter')
+  const votes = await db.collection('votes').find({ roomId }).toArray()
+
+  const counts: Record<string, number> = {}
+  for (const vote of votes) {
+    const id = vote.submissionId.toString()
+    counts[id] = (counts[id] || 0) + 1
+  }
+
+  return counts
+}
+
 export default async function RoomPage({ params }: { params: { id: string } }) {
   const client = await clientPromise
   const db = client.db('foodvoter') // Replace if your DB name is different
   const room = await db.collection<Room>('rooms').findOne({ id: params.id })
   const submissions = await getSubmissions(params.id)
+  const voteCounts = await getVotes(params.id)
 
   if (!room) return notFound()
 
@@ -114,6 +129,10 @@ export default async function RoomPage({ params }: { params: { id: string } }) {
             >
               Vote
             </button>
+            <p className='text-sm text-gray-700 mt-1'>
+              {voteCounts[sub.id] || 0} vote
+              {voteCounts[sub.id] === 1 ? '' : 's'}
+            </p>
           </div>
         ))}
       </div>
