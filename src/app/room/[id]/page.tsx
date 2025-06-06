@@ -1,6 +1,8 @@
 import clientPromise from '@/lib/mongodb'
 import { notFound } from 'next/navigation'
 import ClientWrapper from './ClientWrapper'
+import QRCodeDisplay from './QRCodeDisplay'
+import CountdownTimer from './CountdownTimer'
 
 interface RoomPageProps {
   params: {
@@ -11,14 +13,6 @@ interface Room {
   roomId: string
   title: string
   deadline: string
-}
-
-function getTimeLeft(deadline: string) {
-  const ms = new Date(deadline).getTime() - Date.now()
-  if (ms <= 0) return 'Voting ended'
-  const min = Math.floor(ms / 60000)
-  const sec = Math.floor((ms % 60000) / 1000)
-  return `${min}:${sec.toString().padStart(2, '0')} left`
 }
 
 async function getVotes(roomId: string) {
@@ -49,7 +43,8 @@ export default async function RoomPage({ params }: RoomPageProps) {
   return (
     <main className='max-w-md mx-auto p-6 space-y-4'>
       <h1 className='text-2xl font-bold'>{room.title}</h1>
-      <p className='text-gray-600'>⏳ {getTimeLeft(room.deadline)}</p>
+      <CountdownTimer deadline={room.deadline} />
+      <QRCodeDisplay roomId={room.roomId} />
 
       {/* 🔜 Recipe input + vote section will go here */}
       <div className='mt-6 text-gray-400 italic'>
