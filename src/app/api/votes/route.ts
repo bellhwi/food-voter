@@ -1,26 +1,67 @@
+import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '@/lib/mongodb'
-import { NextResponse } from 'next/server'
-
-export async function POST(req: Request) {
-  const { roomId, submissionId, nickname } = await req.json()
-  if (!roomId || !submissionId || !nickname) {
-    return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
-  }
+export async function GET(req: NextRequest) {
+  const roomId = req.nextUrl.searchParams.get('roomId')
+  if (!roomId)
+    return NextResponse.json({ error: 'Missing roomId' }, { status: 400 })
 
   const client = await clientPromise
   const db = client.db('foodvoter')
+  const votes = await db.collection('votes').find({ roomId }).toArray()
 
-  const existing = await db.collection('votes').findOne({ roomId, nickname })
-  if (existing) {
-    return NextResponse.json({ error: 'Already voted' }, { status: 400 })
+  const counts: Record<string, number> = {}
+  for (const vote of votes) {
+    const id = vote.submissionId.toString()
+    counts[id] = (counts[id] || 0) + 1
   }
 
-  await db.collection('votes').insertOne({
-    roomId,
-    submissionId,
-    nickname,
-    createdAt: new Date(),
-  })
+  return NextResponse.json(counts)
+}
+export async function POST(req: NextRequest) {
+  try {
+    const { roomId, submissionId, nickname } = await req.json()
 
-  return NextResponse.json({ ok: true })
+    if (!roomId || !submissionId || !nickname) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      )
+    }
+
+    const client = await clientPromise
+    const db = client.db('foodvoter')
+
+    // Save the vote
+    await db.collection('votes').insertOne({
+      roomId,
+      submissionId,
+      nickname,
+      createdAt: new Date(),
+    })
+
+    // Count unique voters
+    const uniqueVoters = await db
+      .collection('votes')
+      .distinct('nickname', { roomId })
+
+    // Count expected voters based on submissions
+    const expectedVoters = await db
+      .collection('submissions')
+      .distinct('nickname', { roomId })
+
+    // Transition to results phase if everyone voted
+    if (uniqueVoters.length >= expectedVoters.length) {
+      await db
+        .collection('rooms')
+        .updateOne({ roomId }, { $set: { phase: 'results' } })
+    }
+
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('Vote error:', err)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
 }

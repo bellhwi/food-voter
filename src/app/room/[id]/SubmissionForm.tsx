@@ -1,57 +1,60 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-function SubmissionForm({ roomId }: { roomId: string }) {
+import { useState } from 'react'
+
+export default function SubmissionForm({ roomId }: { roomId: string }) {
   const [nickname, setNickname] = useState('')
   const [menu, setMenu] = useState('')
-  const [sent, setSent] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!nickname || !menu) return
+
+    setLoading(true)
     const res = await fetch('/api/submissions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ roomId, nickname, menu }),
     })
+
     if (res.ok) {
-      setSent(true)
-      setTimeout(() => window.location.reload(), 300) // 0.3초 후 새로고침
+      // ✅ Save nickname in cookie instead of localStorage
+      document.cookie = `nickname=${nickname}; path=/`
+      setSubmitted(true)
     }
+    setLoading(false)
   }
 
-  useEffect(() => {
-    const saved = localStorage.getItem('nickname')
-    if (saved) setNickname(saved)
-  }, [])
-
-  if (sent) return <p className='text-green-600'>Submitted! ✅</p>
+  if (submitted) {
+    return <p className='mt-4 text-green-600'>Thanks for your suggestion!</p>
+  }
 
   return (
-    <form onSubmit={handleSubmit} className='space-y-2 mt-6'>
+    <form onSubmit={handleSubmit} className='space-y-4 mt-4'>
       <input
-        value={nickname}
-        onChange={(e) => {
-          setNickname(e.target.value)
-          localStorage.setItem('nickname', e.target.value)
-        }}
+        type='text'
         placeholder='Your nickname'
-        className='w-full border rounded p-2'
+        value={nickname}
+        onChange={(e) => setNickname(e.target.value)}
         required
+        className='w-full px-3 py-2 border rounded'
       />
       <input
+        type='text'
+        placeholder='Suggested menu'
         value={menu}
         onChange={(e) => setMenu(e.target.value)}
-        placeholder='Menu idea (e.g. Sushi)'
-        className='w-full border rounded p-2'
         required
+        className='w-full px-3 py-2 border rounded'
       />
       <button
         type='submit'
-        className='bg-blue-600 text-white px-4 py-2 rounded w-full'
+        disabled={loading}
+        className='w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700'
       >
-        Submit
+        {loading ? 'Submitting...' : 'Submit'}
       </button>
     </form>
   )
 }
-export default SubmissionForm
