@@ -88,6 +88,32 @@ export default async function RoomPage({ params }: { params: { id: string } }) {
           <div key={sub.id} className='border p-3 rounded shadow-sm bg-white'>
             <p className='font-medium'>{sub.menu}</p>
             <p className='text-sm text-gray-500'>by {sub.nickname}</p>
+
+            {/* ✅ Vote Button */}
+            <button
+              className='mt-2 bg-green-600 text-white px-3 py-1 rounded'
+              onClick={async () => {
+                const res = await fetch('/api/votes', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    roomId: room.id,
+                    submissionId: sub.id,
+                    nickname: 'YOUR_NICKNAME', // 🔁 replace later
+                  }),
+                })
+
+                const data = await res.json()
+                if (res.ok) {
+                  alert('Vote submitted!')
+                  window.location.reload()
+                } else {
+                  alert(data.error)
+                }
+              }}
+            >
+              Vote
+            </button>
           </div>
         ))}
       </div>
