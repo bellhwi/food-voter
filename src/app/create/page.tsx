@@ -18,8 +18,8 @@ export default function CreatePage() {
     })
 
     const data = await res.json()
-    if (data.id) {
-      router.push(`/room/${data.id}`)
+    if (data.roomId) {
+      router.push(`/room/${data.roomId}`)
     }
   }
 

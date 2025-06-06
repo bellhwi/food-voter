@@ -14,17 +14,17 @@ export async function POST(req: Request) {
       )
     }
 
-    const id = new ObjectId().toString()
+    const roomId = new ObjectId().toString()
     const createdAt = new Date()
-    const deadline = new Date(Date.now() + 1000 * 60 * 60 * 24) // 24 hours from now
+    const deadline = new Date(Date.now() + 1000 * 30)
 
     const client = await clientPromise
-    const db = client.db('sandbox')
+    const db = client.db('foodvoter')
     const collection = db.collection('rooms')
 
-    await collection.insertOne({ id, title, createdAt, deadline })
+    await collection.insertOne({ roomId, title, createdAt, deadline })
 
-    return NextResponse.json({ id }, { status: 200 })
+    return NextResponse.json({ roomId }, { status: 200 })
   } catch (error) {
     console.error('POST /api/rooms error:', error)
     return NextResponse.json(
