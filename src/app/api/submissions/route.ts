@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '@/lib/mongodb'
+
 export async function GET(req: NextRequest) {
   const roomId = req.nextUrl.searchParams.get('roomId')
   if (!roomId)
@@ -43,6 +44,12 @@ export async function POST(req: NextRequest) {
       menu,
       createdAt: new Date(),
     })
+
+    // Add participant to the room (once per nickname)
+    await db.collection('rooms').updateOne(
+      { roomId },
+      { $addToSet: { participants: nickname } } // ensures no duplicates
+    )
 
     // Count unique participants
     const uniqueParticipants = await db

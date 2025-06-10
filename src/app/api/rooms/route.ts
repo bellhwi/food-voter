@@ -22,11 +22,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { title } = body
-
-    if (!title) {
+    const { title, hostNickname } = body
+    if (!title || !hostNickname) {
       return NextResponse.json(
-        { message: 'Title is required' },
+        { message: 'Title and hostNickname are required' },
         { status: 400 }
       )
     }
@@ -45,6 +44,7 @@ export async function POST(req: Request) {
       createdAt,
       deadline,
       phase: 'submitting',
+      hostNickname,
     })
 
     return NextResponse.json({ roomId }, { status: 200 })

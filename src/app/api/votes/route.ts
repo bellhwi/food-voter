@@ -45,9 +45,8 @@ export async function POST(req: NextRequest) {
       .distinct('nickname', { roomId })
 
     // Count expected voters based on submissions
-    const expectedVoters = await db
-      .collection('submissions')
-      .distinct('nickname', { roomId })
+    const room = await db.collection('rooms').findOne({ roomId })
+    const expectedVoters = room?.participants || []
 
     // Transition to results phase if everyone voted
     if (uniqueVoters.length >= expectedVoters.length) {

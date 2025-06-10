@@ -21,6 +21,7 @@ type Room = {
   title: string
   deadline: string
   phase: Phase
+  hostNickname: string // ✅ Add this line
 }
 
 export default function ClientWrapper({ roomId }: { roomId: string }) {
@@ -63,7 +64,11 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
       {room.phase === 'submitting' && <SubmissionForm roomId={roomId} />}
 
       {room.phase === 'voting' && (
-        <VoteForm roomId={roomId} submissions={submissions} />
+        <VoteForm
+          roomId={roomId}
+          submissions={submissions}
+          hostNickname={room.hostNickname}
+        />
       )}
 
       {room.phase === 'results' && (
@@ -104,6 +109,14 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
               </div>
             </>
           )}
+          <div className='text-center'>
+            <button
+              onClick={() => (window.location.href = '/create')}
+              className='mt-6 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700'
+            >
+              Create New Room
+            </button>
+          </div>
         </div>
       )}
     </>

@@ -3,8 +3,6 @@ import { notFound } from 'next/navigation'
 import QRCodeDisplay from './QRCodeDisplay'
 import CountdownTimer from './CountdownTimer'
 import ClientWrapper from './ClientWrapper'
-import SubmissionForm from './SubmissionForm'
-import VoteForm from './VoteForm'
 
 interface RoomPageProps {
   params: {
@@ -19,6 +17,7 @@ interface Room {
   title: string
   deadline: string
   phase: Phase
+  hostNickname: string // ✅ Add this
 }
 
 async function getSubmissions(roomId: string) {
@@ -48,9 +47,7 @@ async function getVotes(roomId: string) {
     counts[id] = (counts[id] || 0) + 1
   }
 
-  // Sort by vote count descending
-  const sortedVotes = Object.entries(counts).sort((a, b) => b[1] - a[1])
-  return sortedVotes // [ [submissionId, count], ... ]
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])
 }
 
 export default async function RoomPage({ params }: RoomPageProps) {
