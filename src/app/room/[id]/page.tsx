@@ -2,12 +2,6 @@ import clientPromise from '@/lib/mongodb'
 import { notFound } from 'next/navigation'
 import ClientWrapper from './ClientWrapper'
 
-interface RoomPageProps {
-  params: {
-    id: string
-  }
-}
-
 type Phase = 'submitting' | 'voting' | 'results'
 
 interface Room {
@@ -18,14 +12,19 @@ interface Room {
   hostNickname: string
 }
 
-export default async function RoomPage({ params }: RoomPageProps) {
+type RoomPageParams = Promise<{ id: string }>
+
+// ✅ DO NOT manually type params as a Promise
+// ✅ Let Next.js handle prop types
+export default async function RoomPage({ params }: { params: RoomPageParams }) {
+  const { id } = await params
+
   const client = await clientPromise
   const db = client.db('foodvoter')
 
-  const room = await db.collection<Room>('rooms').findOne({ roomId: params.id })
-  if (!room) return notFound()
+  const room = await db.collection<Room>('rooms').findOne({ roomId: id })
 
-  console.log('room.phase', room.phase)
+  if (!room) return notFound()
 
   return (
     <main className='max-w-md mx-auto p-6 space-y-4'>
