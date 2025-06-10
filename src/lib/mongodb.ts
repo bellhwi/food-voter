@@ -1,26 +1,28 @@
 import { MongoClient } from 'mongodb'
 
-const uri = process.env.MONGODB_URI!
+const uri = process.env.MONGODB_URI
 const options = {}
 
-let client
-let clientPromise: Promise<MongoClient>
-
-declare global {
-  var _mongoClientPromise: Promise<MongoClient>
-}
-
-if (!process.env.MONGODB_URI) {
+if (!uri) {
   throw new Error('Please add your Mongo URI to .env.local')
 }
 
+let client: MongoClient
+let clientPromise: Promise<MongoClient>
+
+const globalForMongo = globalThis as unknown as {
+  _mongoClientPromise?: Promise<MongoClient>
+}
+
+// In development, reuse the client to avoid creating multiple connections on hot reload
 if (process.env.NODE_ENV === 'development') {
-  if (!global._mongoClientPromise) {
+  if (!globalForMongo._mongoClientPromise) {
     client = new MongoClient(uri, options)
-    global._mongoClientPromise = client.connect()
+    globalForMongo._mongoClientPromise = client.connect()
   }
-  clientPromise = global._mongoClientPromise
+  clientPromise = globalForMongo._mongoClientPromise
 } else {
+  // In production, always create a new connection
   client = new MongoClient(uri, options)
   clientPromise = client.connect()
 }

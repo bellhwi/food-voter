@@ -83,7 +83,7 @@ export default function VoteForm({
   if (blocked) {
     return (
       <p className='mt-4 text-red-500'>
-        You're not eligible to vote in this room.
+        You&apos;re not eligible to vote in this room.
       </p>
     )
   }
