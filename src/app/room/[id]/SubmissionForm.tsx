@@ -7,22 +7,30 @@ export default function SubmissionForm({ roomId }: { roomId: string }) {
   const [menu, setMenu] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!nickname || !menu) return
 
     setLoading(true)
+    setError('') // Clear any previous error
+
     const res = await fetch('/api/submissions', {
       method: 'POST',
       body: JSON.stringify({ roomId, nickname, menu }),
     })
 
     if (res.ok) {
-      // ✅ Save nickname in cookie instead of localStorage
       document.cookie = `nickname=${nickname}; path=/`
       setSubmitted(true)
+    } else if (res.status === 403) {
+      const data = await res.json()
+      setError(data.error || 'Submissions are closed.')
+    } else {
+      setError('Something went wrong. Please try again.')
     }
+
     setLoading(false)
   }
 
@@ -32,6 +40,10 @@ export default function SubmissionForm({ roomId }: { roomId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className='space-y-4 mt-4'>
+      {error && (
+        <p className='text-red-600 text-sm bg-red-100 p-2 rounded'>{error}</p>
+      )}
+
       <input
         type='text'
         placeholder='Your nickname'

@@ -6,7 +6,8 @@ import { mutate } from 'swr'
 interface Props {
   submissions: { id: string; menu: string; nickname: string }[]
   roomId: string
-  hostNickname: string // <- pass this from parent
+  hostNickname: string
+  roomPhase: 'submitting' | 'voting' | 'results'
 }
 
 function getCookie(name: string) {
@@ -14,20 +15,31 @@ function getCookie(name: string) {
   return match ? decodeURIComponent(match[2]) : null
 }
 
-export default function VoteForm({ submissions, roomId, hostNickname }: Props) {
+export default function VoteForm({
+  submissions,
+  roomId,
+  hostNickname,
+  roomPhase,
+}: Props) {
   const [selectedId, setSelectedId] = useState('')
   const [nickname, setNickname] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [blocked, setBlocked] = useState(false)
 
   useEffect(() => {
     const saved = getCookie('nickname')
     if (saved) {
       setNickname(saved)
     } else {
-      alert('Please submit a menu before voting.')
+      if (roomPhase === 'submitting') {
+        alert('Please submit a menu before voting.')
+      } else {
+        alert("Voting has already started. You're not allowed to vote.")
+        setBlocked(true)
+      }
     }
-  }, [])
+  }, [roomPhase])
 
   const isHost = nickname === hostNickname
 
@@ -61,12 +73,19 @@ export default function VoteForm({ submissions, roomId, hostNickname }: Props) {
       return
     }
 
-    // Refresh the list
     mutate(`/api/rooms/${roomId}`)
   }
 
   if (submitted) {
     return <p className='mt-4 text-green-600'>Thanks for voting!</p>
+  }
+
+  if (blocked) {
+    return (
+      <p className='mt-4 text-red-500'>
+        You're not eligible to vote in this room.
+      </p>
+    )
   }
 
   return (

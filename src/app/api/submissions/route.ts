@@ -37,7 +37,16 @@ export async function POST(req: NextRequest) {
     const client = await clientPromise
     const db = client.db('foodvoter')
 
-    // Save the submission
+    // 🔒 Check if room is locked for submissions
+    const room = await db.collection('rooms').findOne({ roomId })
+    if (room?.allowSubmissions === false) {
+      return NextResponse.json(
+        { error: 'Voting has already started. Submissions are closed.' },
+        { status: 403 }
+      )
+    }
+
+    // 💾 Save the submission
     await db.collection('submissions').insertOne({
       roomId,
       nickname,
@@ -45,25 +54,25 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     })
 
-    // Add participant to the room (once per nickname)
-    await db.collection('rooms').updateOne(
-      { roomId },
-      { $addToSet: { participants: nickname } } // ensures no duplicates
-    )
+    // 👥 Add participant (deduplicated)
+    await db
+      .collection('rooms')
+      .updateOne({ roomId }, { $addToSet: { participants: nickname } })
 
-    // Count unique participants
+    // 🔢 Count participants
     const uniqueParticipants = await db
       .collection('submissions')
       .distinct('nickname', { roomId })
 
-    // Transition to voting if enough users have submitted
+    // 🚦 Transition to voting if ready
     if (uniqueParticipants.length >= 2) {
       await db.collection('rooms').updateOne(
         { roomId },
         {
           $set: {
             phase: 'voting',
-            deadline: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 mins
+            deadline: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+            allowSubmissions: false, // ✅ Lock room from more entries
           },
         }
       )
