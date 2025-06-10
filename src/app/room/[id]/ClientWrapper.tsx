@@ -7,7 +7,22 @@ import VoteForm from './VoteForm'
 import QRCodeDisplay from './QRCodeDisplay'
 import CountdownTimer from './CountdownTimer'
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
+const safeFetcher = async (url: string) => {
+  const res = await fetch(url)
+  const text = await res.text()
+
+  try {
+    const json = JSON.parse(text)
+    if (!res.ok) {
+      console.error(`[SWR Fetch Error] ${url}`, json)
+      throw new Error(json.error || 'Server error')
+    }
+    return json
+  } catch (err) {
+    console.error(`[SWR Parse Error] ${url}`, err, 'Raw response:', text)
+    throw new Error('Failed to parse server response')
+  }
+}
 
 type Submission = {
   id: string
@@ -29,23 +44,21 @@ type Room = {
 
 export default function ClientWrapper({ roomId }: { roomId: string }) {
   const { data: room, error: roomError } = useSWR<Room>(
-    `/api/rooms?roomId=${roomId}`,
-    fetcher,
+    roomId ? `/api/rooms?roomId=${roomId}` : null,
+    safeFetcher,
     { refreshInterval: 3000 }
   )
 
-  const shouldPoll = room?.phase !== 'results'
-
   const { data: submissions, error: subError } = useSWR<Submission[]>(
-    `/api/submissions?roomId=${roomId}`,
-    fetcher,
-    { refreshInterval: shouldPoll ? 3000 : 0 }
+    room ? `/api/submissions?roomId=${roomId}` : null,
+    safeFetcher,
+    { refreshInterval: room?.phase !== 'results' ? 3000 : 0 }
   )
 
   const { data: voteCounts, error: voteError } = useSWR<VoteCounts>(
-    `/api/votes?roomId=${roomId}`,
-    fetcher,
-    { refreshInterval: shouldPoll ? 3000 : 0 }
+    room ? `/api/votes?roomId=${roomId}` : null,
+    safeFetcher,
+    { refreshInterval: room?.phase !== 'results' ? 3000 : 0 }
   )
 
   const [nickname, setNickname] = useState('')
@@ -59,14 +72,39 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
   const [newTitle, setNewTitle] = useState('')
 
   const handleTitleUpdate = async () => {
-    if (!newTitle.trim()) return
-    await fetch('/api/rooms', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomId, newTitle, nickname }),
-    })
-    setEditMode(false)
-    mutate(`/api/rooms?roomId=${roomId}`)
+    if (!newTitle.trim() || !nickname) {
+      alert(
+        'Nickname is missing. Please refresh the page or check your cookie.'
+      )
+      return
+    }
+
+    try {
+      const res = await fetch('/api/rooms', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId, newTitle, nickname }),
+      })
+
+      const text = await res.text()
+      if (!res.ok) {
+        console.error('PUT /api/rooms failed:', text)
+        alert('Server error: ' + text)
+        return
+      }
+
+      const data = JSON.parse(text)
+      if (!data.success) {
+        alert('Update failed. Try again later.')
+        return
+      }
+
+      setEditMode(false)
+      mutate(`/api/rooms?roomId=${roomId}`)
+    } catch (err) {
+      console.error('handleTitleUpdate error:', err)
+      alert('Something went wrong.')
+    }
   }
 
   if (roomError || subError || voteError)
@@ -81,13 +119,10 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
 
   return (
     <>
-      {/* ⏱ Voting Timer */}
       {room.phase === 'voting' && <CountdownTimer deadline={room.deadline} />}
-
-      {/* 📱 QR Code Display for submitting phase */}
       {room.phase === 'submitting' && <QRCodeDisplay roomId={room.roomId} />}
 
-      {/* 📝 Title & Edit */}
+      {/* Title & Edit Section */}
       <div className='flex justify-between items-center mt-6 mb-4'>
         {isHost && editMode && room.phase === 'submitting' ? (
           <>
@@ -128,8 +163,19 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
         )}
       </div>
 
-      {/* 👥 Phase-specific components */}
-      {room.phase === 'submitting' && <SubmissionForm roomId={roomId} />}
+      {room.phase === 'submitting' && (
+        <SubmissionForm
+          roomId={roomId}
+          presetNickname={isHost ? nickname : undefined}
+        />
+      )}
+
+      {room.phase === 'submitting' && isHost && (
+        <p className='text-gray-600 italic mb-6'>
+          Waiting for others to submit their menus...
+        </p>
+      )}
+
       {room.phase === 'voting' && (
         <VoteForm
           roomId={roomId}
@@ -138,6 +184,7 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
           roomPhase={room.phase}
         />
       )}
+
       {room.phase === 'results' && (
         <div className='mt-6 space-y-6'>
           <p className='text-green-600 font-semibold'>Voting ended! 🎉</p>

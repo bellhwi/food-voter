@@ -1,28 +1,45 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-export default function SubmissionForm({ roomId }: { roomId: string }) {
-  const [nickname, setNickname] = useState('')
+export default function SubmissionForm({
+  roomId,
+  presetNickname,
+}: {
+  roomId: string
+  presetNickname?: string
+}) {
+  const [nickname, setNickname] = useState(presetNickname || '')
   const [menu, setMenu] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
 
+  // If no preset, try getting nickname from cookie
+  useEffect(() => {
+    if (!presetNickname) {
+      const match = document.cookie.match(/(^| )nickname=([^;]+)/)
+      if (match) setNickname(decodeURIComponent(match[2]))
+    }
+  }, [presetNickname])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!nickname || !menu) return
+    if (!nickname.trim() || !menu.trim()) return
 
     setLoading(true)
-    setError('') // Clear any previous error
+    setError('')
 
     const res = await fetch('/api/submissions', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ roomId, nickname, menu }),
     })
 
     if (res.ok) {
-      document.cookie = `nickname=${nickname}; path=/`
+      if (!presetNickname) {
+        document.cookie = `nickname=${encodeURIComponent(nickname)}; path=/`
+      }
       setSubmitted(true)
     } else if (res.status === 403) {
       const data = await res.json()
@@ -44,14 +61,17 @@ export default function SubmissionForm({ roomId }: { roomId: string }) {
         <p className='text-red-600 text-sm bg-red-100 p-2 rounded'>{error}</p>
       )}
 
-      <input
-        type='text'
-        placeholder='Your nickname'
-        value={nickname}
-        onChange={(e) => setNickname(e.target.value)}
-        required
-        className='w-full px-3 py-2 border rounded'
-      />
+      {!presetNickname && (
+        <input
+          type='text'
+          placeholder='Your nickname'
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          required
+          className='w-full px-3 py-2 border rounded'
+        />
+      )}
+
       <input
         type='text'
         placeholder='Suggested menu'
