@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params
+export async function DELETE(req: NextRequest) {
+  const url = new URL(req.url)
+  const id = url.pathname.split('/').pop() // extract ID from the URL path
 
   if (!id) {
     return NextResponse.json({ error: 'Missing ID' }, { status: 400 })
