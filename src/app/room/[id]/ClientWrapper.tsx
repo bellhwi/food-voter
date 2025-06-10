@@ -1,6 +1,7 @@
 'use client'
 
-import useSWR from 'swr'
+import { useEffect, useState } from 'react'
+import useSWR, { mutate } from 'swr'
 import SubmissionForm from './SubmissionForm'
 import VoteForm from './VoteForm'
 
@@ -21,7 +22,7 @@ type Room = {
   title: string
   deadline: string
   phase: Phase
-  hostNickname: string // ✅ Add this line
+  hostNickname: string
 }
 
 export default function ClientWrapper({ roomId }: { roomId: string }) {
@@ -45,22 +46,80 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
     { refreshInterval: shouldPoll ? 3000 : 0 }
   )
 
+  const [nickname, setNickname] = useState('')
+  useEffect(() => {
+    const match = document.cookie.match(/(^| )nickname=([^;]+)/)
+    if (match) setNickname(decodeURIComponent(match[2]))
+  }, [])
+
+  const isHost = nickname === room?.hostNickname
+  const [editMode, setEditMode] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+
+  const handleTitleUpdate = async () => {
+    if (!newTitle.trim()) return
+    await fetch('/api/rooms', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomId, newTitle, nickname }),
+    })
+    setEditMode(false)
+    mutate(`/api/rooms?roomId=${roomId}`)
+  }
+
   if (roomError || subError || voteError)
     return <p className='text-red-500'>Failed to load data.</p>
-
   if (!room || !submissions || !voteCounts) return <p>Loading...</p>
 
   const sortedResults = submissions
-    .map((s) => ({
-      ...s,
-      votes: voteCounts[s.id] || 0,
-    }))
+    .map((s) => ({ ...s, votes: voteCounts[s.id] || 0 }))
     .sort((a, b) => b.votes - a.votes)
 
   const winner = sortedResults[0]
 
   return (
     <>
+      <div className='flex justify-between items-center mt-6 mb-4'>
+        {/* ✅ Only Host can Edit in Submitting Phase */}
+        {isHost && editMode && room.phase === 'submitting' ? (
+          <>
+            <input
+              type='text'
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              className='border px-2 py-1 rounded w-full max-w-md'
+            />
+            <button
+              onClick={handleTitleUpdate}
+              className='ml-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700'
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setEditMode(false)} // ✅ Cancel button
+              className='ml-2 px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400'
+            >
+              Cancel
+            </button>
+          </>
+        ) : (
+          <h1 className='text-xl font-bold'>
+            {room.title}{' '}
+            {isHost && room.phase === 'submitting' && (
+              <button
+                className='ml-2 text-sm text-blue-600 hover:underline'
+                onClick={() => {
+                  setNewTitle(room.title)
+                  setEditMode(true)
+                }}
+              >
+                ✏️ Edit
+              </button>
+            )}
+          </h1>
+        )}
+      </div>
+
       {room.phase === 'submitting' && <SubmissionForm roomId={roomId} />}
 
       {room.phase === 'voting' && (
@@ -68,13 +127,13 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
           roomId={roomId}
           submissions={submissions}
           hostNickname={room.hostNickname}
+          roomPhase={room.phase}
         />
       )}
 
       {room.phase === 'results' && (
         <div className='mt-6 space-y-6'>
           <p className='text-green-600 font-semibold'>Voting ended! 🎉</p>
-
           {sortedResults.length === 0 ? (
             <p className='text-gray-500 mt-2'>No votes submitted.</p>
           ) : (

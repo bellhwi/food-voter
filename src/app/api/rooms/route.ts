@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     const roomId = new ObjectId().toString()
     const createdAt = new Date()
-    const deadline = new Date(Date.now() + 5 * 60 * 1000).toISOString() // 5 mins from now
+    const deadline = new Date(Date.now() + 5 * 60 * 1000).toISOString()
 
     const client = await clientPromise
     const db = client.db('foodvoter')
@@ -63,6 +63,53 @@ export async function POST(req: Request) {
     return NextResponse.json({ roomId }, { status: 200 })
   } catch (error) {
     console.error('POST /api/rooms error:', error)
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const { roomId, newTitle, nickname } = await req.json()
+
+    if (!roomId || !newTitle || !nickname) {
+      return NextResponse.json(
+        { error: 'Missing roomId, newTitle, or nickname' },
+        { status: 400 }
+      )
+    }
+
+    const client = await clientPromise
+    const db = client.db('foodvoter')
+
+    const room = await db.collection<Room>('rooms').findOne({ roomId })
+    if (!room) {
+      return NextResponse.json({ error: 'Room not found' }, { status: 404 })
+    }
+
+    if (room.hostNickname !== nickname) {
+      return NextResponse.json(
+        { error: 'Only the host can edit the room title' },
+        { status: 403 }
+      )
+    }
+
+    if (room.phase !== 'submitting') {
+      return NextResponse.json(
+        { error: 'Title can only be edited during the submitting phase' },
+        { status: 400 }
+      )
+    }
+
+    const result = await db
+      .collection('rooms')
+      .updateOne({ roomId }, { $set: { title: newTitle } })
+
+    return NextResponse.json({ success: result.modifiedCount === 1 })
+  } catch (error) {
+    console.error('PUT /api/rooms error:', error)
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
