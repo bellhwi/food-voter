@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import useSWR, { mutate } from 'swr'
 import SubmissionForm from './SubmissionForm'
 import VoteForm from './VoteForm'
+import QRCodeDisplay from './QRCodeDisplay'
+import CountdownTimer from './CountdownTimer'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -79,8 +81,14 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
 
   return (
     <>
+      {/* ⏱ Voting Timer */}
+      {room.phase === 'voting' && <CountdownTimer deadline={room.deadline} />}
+
+      {/* 📱 QR Code Display for submitting phase */}
+      {room.phase === 'submitting' && <QRCodeDisplay roomId={room.roomId} />}
+
+      {/* 📝 Title & Edit */}
       <div className='flex justify-between items-center mt-6 mb-4'>
-        {/* ✅ Only Host can Edit in Submitting Phase */}
         {isHost && editMode && room.phase === 'submitting' ? (
           <>
             <input
@@ -96,7 +104,7 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
               Save
             </button>
             <button
-              onClick={() => setEditMode(false)} // ✅ Cancel button
+              onClick={() => setEditMode(false)}
               className='ml-2 px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400'
             >
               Cancel
@@ -120,8 +128,8 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
         )}
       </div>
 
+      {/* 👥 Phase-specific components */}
       {room.phase === 'submitting' && <SubmissionForm roomId={roomId} />}
-
       {room.phase === 'voting' && (
         <VoteForm
           roomId={roomId}
@@ -130,7 +138,6 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
           roomPhase={room.phase}
         />
       )}
-
       {room.phase === 'results' && (
         <div className='mt-6 space-y-6'>
           <p className='text-green-600 font-semibold'>Voting ended! 🎉</p>
