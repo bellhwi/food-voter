@@ -12,6 +12,7 @@ interface Room {
   participants?: string[]
 }
 
+// GET /api/rooms?roomId=123
 export async function GET(req: NextRequest) {
   const roomId = req.nextUrl.searchParams.get('roomId')
   if (!roomId) {
@@ -23,20 +24,20 @@ export async function GET(req: NextRequest) {
   const room = await db.collection<Room>('rooms').findOne({ roomId })
 
   if (!room) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Room not found' }, { status: 404 })
   }
 
   return NextResponse.json(room)
 }
 
+// POST /api/rooms
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
-    const { title, hostNickname } = body
+    const { title, hostNickname }: Partial<Room> = await req.json()
 
     if (!title || !hostNickname) {
       return NextResponse.json(
-        { error: 'Title and hostNickname are required' },
+        { error: 'Both title and hostNickname are required.' },
         { status: 400 }
       )
     }
@@ -44,9 +45,6 @@ export async function POST(req: Request) {
     const roomId = new ObjectId().toString()
     const createdAt = new Date()
     const deadline = new Date(Date.now() + 5 * 60 * 1000).toISOString()
-
-    const client = await clientPromise
-    const db = client.db('foodvoter')
 
     const newRoom: Room = {
       roomId,
@@ -57,6 +55,9 @@ export async function POST(req: Request) {
       hostNickname,
       participants: [],
     }
+
+    const client = await clientPromise
+    const db = client.db('foodvoter')
 
     await db.collection<Room>('rooms').insertOne(newRoom)
 
@@ -70,13 +71,15 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PUT(req: NextRequest) {
+// PUT /api/rooms
+export async function PUT(req: Request) {
   try {
-    const { roomId, newTitle, nickname } = await req.json()
+    const body = await req.json()
+    const { roomId, newTitle, nickname } = body
 
     if (!roomId || !newTitle || !nickname) {
       return NextResponse.json(
-        { error: 'Missing roomId, newTitle, or nickname' },
+        { error: 'Missing roomId, newTitle, or nickname.' },
         { status: 400 }
       )
     }
@@ -85,20 +88,21 @@ export async function PUT(req: NextRequest) {
     const db = client.db('foodvoter')
 
     const room = await db.collection<Room>('rooms').findOne({ roomId })
+
     if (!room) {
       return NextResponse.json({ error: 'Room not found' }, { status: 404 })
     }
 
     if (room.hostNickname !== nickname) {
       return NextResponse.json(
-        { error: 'Only the host can edit the room title' },
+        { error: 'Only the host can edit the room title.' },
         { status: 403 }
       )
     }
 
     if (room.phase !== 'submitting') {
       return NextResponse.json(
-        { error: 'Title can only be edited during the submitting phase' },
+        { error: 'Title can only be edited during the submitting phase.' },
         { status: 400 }
       )
     }
