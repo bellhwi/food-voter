@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import useSWR, { mutate } from 'swr'
 import SubmissionForm from './SubmissionForm'
 import VoteForm from './VoteForm'
 import QRCodeDisplay from './QRCodeDisplay'
 import CountdownTimer from './CountdownTimer'
+import { useNicknameStore } from '@/stores/nicknameStore'
 
 const safeFetcher = async (url: string) => {
   const res = await fetch(url)
@@ -32,7 +33,7 @@ type Submission = {
 
 type VoteCounts = Record<string, number>
 
-type Phase = 'submitting' | 'voting' | 'results'
+type Phase = 'waiting' | 'submitting' | 'voting' | 'results'
 
 type Room = {
   roomId: string
@@ -40,6 +41,8 @@ type Room = {
   deadline: string
   phase: Phase
   hostNickname: string
+  participants: string[]
+  expectedParticipantCount?: number
 }
 
 export default function ClientWrapper({ roomId }: { roomId: string }) {
@@ -61,21 +64,22 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
     { refreshInterval: room?.phase !== 'results' ? 3000 : 0 }
   )
 
-  const [nickname, setNickname] = useState('')
-  useEffect(() => {
-    const match = document.cookie.match(/(^| )nickname=([^;]+)/)
-    if (match) setNickname(decodeURIComponent(match[2]))
-  }, [])
-
+  const { nickname, setNickname } = useNicknameStore()
   const isHost = nickname === room?.hostNickname
   const [editMode, setEditMode] = useState(false)
   const [newTitle, setNewTitle] = useState('')
+  const [hasClickedReady, setHasClickedReady] = useState(false)
+  const [localNickname, setLocalNickname] = useState(nickname)
+
+  useEffect(() => {
+    if (room?.participants.includes(nickname)) {
+      setHasClickedReady(true)
+    }
+  }, [room, nickname])
 
   const handleTitleUpdate = async () => {
     if (!newTitle.trim() || !nickname) {
-      alert(
-        'Nickname is missing. Please refresh the page or check your cookie.'
-      )
+      alert('Nickname is missing.')
       return
     }
 
@@ -120,7 +124,7 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
   return (
     <>
       {room.phase === 'voting' && <CountdownTimer deadline={room.deadline} />}
-      {room.phase === 'submitting' && <QRCodeDisplay roomId={room.roomId} />}
+      {room.phase === 'waiting' && <QRCodeDisplay roomId={room.roomId} />}
 
       {/* Title & Edit Section */}
       <div className='flex justify-between items-center mt-6 mb-4'>
@@ -163,11 +167,113 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
         )}
       </div>
 
+      {/* Show participants & Start Voting */}
+      {room.phase === 'waiting' && (
+        <div className='mt-4'>
+          <h2 className='font-semibold'>Participants Ready:</h2>
+          <ul className='list-disc list-inside text-gray-400'>
+            {room.participants?.map((p) => (
+              <li key={p}>
+                {p === room.hostNickname ? `Host${isHost ? ' (You)' : ''}` : p}
+              </li>
+            ))}
+          </ul>
+
+          {/* Nickname input + ready button */}
+          {!room.participants.includes(nickname) && !isHost && (
+            <>
+              <input
+                type='text'
+                placeholder='Your nickname'
+                value={localNickname}
+                onChange={(e) => setLocalNickname(e.target.value)}
+                required
+                className='mt-4 w-full px-3 py-2 border rounded'
+              />
+              <button
+                className='mt-6 bg-green-800 text-white px-4 py-2 rounded hover:bg-green-900'
+                onClick={async () => {
+                  if (!localNickname.trim()) return
+
+                  setNickname(localNickname)
+
+                  const res = await fetch('/api/ready', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roomId, nickname: localNickname }),
+                  })
+
+                  if (res.ok) {
+                    setHasClickedReady(true)
+                    mutate(`/api/rooms?roomId=${roomId}`)
+                  } else {
+                    alert('Failed to mark as ready.')
+                  }
+                }}
+              >
+                I’m Ready
+              </button>
+            </>
+          )}
+
+          {/* ✅ Show this regardless of participant status */}
+          {hasClickedReady && !isHost && (
+            <p className='mt-2 text-sm text-gray-600'>
+              Waiting for others to get ready...
+            </p>
+          )}
+
+          {/* Host Start Voting Button */}
+          {isHost && (
+            <button
+              className={`mt-4 px-4 py-2 rounded text-white transition ${
+                room.participants.length < 1
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-green-800 hover:bg-green-900'
+              }`}
+              onClick={async () => {
+                const res = await fetch('/api/rooms/start', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ roomId, nickname }),
+                })
+                if (res.ok) {
+                  mutate(`/api/rooms?roomId=${roomId}`)
+                } else {
+                  const err = await res.json()
+                  alert(err.error || 'Failed to start voting.')
+                }
+              }}
+              disabled={room.participants.length < 1}
+            >
+              Start
+            </button>
+          )}
+        </div>
+      )}
+
       {room.phase === 'submitting' && (
-        <SubmissionForm
-          roomId={roomId}
-          presetNickname={isHost ? nickname : undefined}
-        />
+        <>
+          {room.expectedParticipantCount && (
+            <div className='mb-4 text-center'>
+              <p className='text-sm text-gray-500 mb-1'>
+                {submissions.length} of {room.expectedParticipantCount} menus
+                submitted
+              </p>
+              <div className='w-full bg-gray-200 rounded-full h-2 max-w-md mx-auto'>
+                <div
+                  className='bg-green-600 h-2 rounded-full transition-all duration-300'
+                  style={{
+                    width: `${
+                      (submissions.length / room.expectedParticipantCount) * 100
+                    }%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+          <SubmissionForm roomId={roomId} />
+        </>
       )}
 
       {room.phase === 'voting' && (

@@ -2,29 +2,40 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Cookies from 'js-cookie'
+import { useNicknameStore } from '@/stores/nicknameStore'
 
 export default function CreatePage() {
   const [title, setTitle] = useState('')
   const [nickname, setNickname] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const setNicknameInStore = useNicknameStore((state) => state.setNickname)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !nickname.trim()) return
 
-    const res = await fetch('/api/rooms', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, hostNickname: nickname }),
-    })
+    setLoading(true)
 
-    const data = await res.json()
-    if (data.roomId) {
-      // Save nickname in cookie for later use (e.g., voting)
-      Cookies.set('nickname', nickname, { expires: 7 })
-      router.push(`/room/${data.roomId}`)
+    try {
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, hostNickname: nickname }),
+      })
+
+      const data = await res.json()
+      if (data.roomId) {
+        setNicknameInStore(nickname)
+        router.push(`/room/${data.roomId}`)
+      }
+    } catch (error) {
+      alert('Failed to create room. Please try again.')
+      console.error(error)
     }
+
+    setLoading(false)
   }
 
   return (
@@ -36,7 +47,7 @@ export default function CreatePage() {
           type='text'
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder='Room title (e.g., "Lunch Drama")'
+          placeholder='Room title (e.g. Lunch Drama)'
           className='w-full p-2 border rounded'
         />
         <input
@@ -48,9 +59,10 @@ export default function CreatePage() {
         />
         <button
           type='submit'
-          className='w-full bg-green-800 text-white py-2 rounded hover:bg-green-900'
+          className='w-full bg-green-800 text-white py-2 rounded hover:bg-green-900 disabled:opacity-50'
+          disabled={loading}
         >
-          Create your Pickle
+          {loading ? 'Creating...' : 'Create your Pickle'}
         </button>
       </form>
     </main>

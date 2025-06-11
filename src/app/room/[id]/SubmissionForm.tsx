@@ -1,27 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useNicknameStore } from '@/stores/nicknameStore'
 
-export default function SubmissionForm({
-  roomId,
-  presetNickname,
-}: {
-  roomId: string
-  presetNickname?: string
-}) {
-  const [nickname, setNickname] = useState(presetNickname || '')
+export default function SubmissionForm({ roomId }: { roomId: string }) {
+  const nickname = useNicknameStore((state) => state.nickname)
   const [menu, setMenu] = useState('')
-  const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [submittedMenu, setSubmittedMenu] = useState('')
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (!presetNickname) {
-      const match = document.cookie.match(/(^| )nickname=([^;]+)/)
-      if (match) setNickname(decodeURIComponent(match[2]))
-    }
-  }, [presetNickname])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,11 +25,8 @@ export default function SubmissionForm({
     })
 
     if (res.ok) {
-      if (!presetNickname) {
-        document.cookie = `nickname=${encodeURIComponent(nickname)}; path=/`
-      }
       setSubmitted(true)
-      setSubmittedMenu(menu) // Save the submitted menu
+      setSubmittedMenu(menu)
     } else if (res.status === 403) {
       const data = await res.json()
       setError(data.error || 'Submissions are closed.')
@@ -62,37 +47,28 @@ export default function SubmissionForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className='space-y-4 mt-4'>
+    <div className='space-y-4 mt-4'>
       {error && (
         <p className='text-red-600 text-sm bg-red-100 p-2 rounded'>{error}</p>
       )}
 
-      {!presetNickname && (
+      <form onSubmit={handleSubmit} className='space-y-4'>
         <input
           type='text'
-          placeholder='Your nickname'
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
+          placeholder='What’s your pick?'
+          value={menu}
+          onChange={(e) => setMenu(e.target.value)}
           required
           className='w-full px-3 py-2 border rounded'
         />
-      )}
-
-      <input
-        type='text'
-        placeholder='What’s your pick?'
-        value={menu}
-        onChange={(e) => setMenu(e.target.value)}
-        required
-        className='w-full px-3 py-2 border rounded'
-      />
-      <button
-        type='submit'
-        disabled={loading}
-        className='w-full bg-green-800 text-white py-2 rounded hover:bg-green-900'
-      >
-        {loading ? 'Submitting...' : 'Submit'}
-      </button>
-    </form>
+        <button
+          type='submit'
+          disabled={loading}
+          className='w-full bg-green-800 text-white py-2 rounded hover:bg-green-900'
+        >
+          {loading ? 'Submitting...' : 'Submit'}
+        </button>
+      </form>
+    </div>
   )
 }

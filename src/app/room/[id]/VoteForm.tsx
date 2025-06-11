@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { mutate } from 'swr'
+import { useNicknameStore } from '@/stores/nicknameStore'
 
 interface Props {
   submissions: { id: string; menu: string; nickname: string }[]
@@ -10,36 +11,38 @@ interface Props {
   roomPhase: 'submitting' | 'voting' | 'results'
 }
 
-function getCookie(name: string) {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-  return match ? decodeURIComponent(match[2]) : null
-}
-
 export default function VoteForm({
   submissions,
   roomId,
   hostNickname,
   roomPhase,
 }: Props) {
+  const nickname = useNicknameStore((state) => state.nickname)
   const [selectedId, setSelectedId] = useState('')
-  const [nickname, setNickname] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [blocked, setBlocked] = useState(false)
 
   useEffect(() => {
-    const saved = getCookie('nickname')
-    if (saved) {
-      setNickname(saved)
-    } else {
-      if (roomPhase === 'submitting') {
-        alert('Please submit a menu before voting.')
-      } else {
-        alert("Voting has already started. You're not allowed to vote.")
-        setBlocked(true)
+    if (roomPhase === 'voting') {
+      const hasSubmitted = submissions.some((s) => s.nickname === nickname)
+
+      if (!hasSubmitted) {
+        // Wait a second before showing the alert to allow SWR to refresh
+        const timeout = setTimeout(() => {
+          alert("Voting has already started. You're not allowed to vote.")
+          setBlocked(true)
+        }, 1000)
+
+        return () => clearTimeout(timeout)
       }
     }
-  }, [roomPhase])
+
+    if (roomPhase === 'submitting') {
+      // Optional: alert if someone tries to jump ahead
+      setBlocked(true)
+    }
+  }, [roomPhase, submissions, nickname])
 
   const isHost = nickname === hostNickname
 

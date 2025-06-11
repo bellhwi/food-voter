@@ -37,9 +37,13 @@ export async function POST(req: NextRequest) {
     const client = await clientPromise
     const db = client.db('foodvoter')
 
-    // Check if room is locked for submissions
     const room = await db.collection('rooms').findOne({ roomId })
-    if (room?.allowSubmissions === false) {
+
+    if (!room) {
+      return NextResponse.json({ error: 'Room not found' }, { status: 404 })
+    }
+
+    if (room.allowSubmissions === false) {
       return NextResponse.json(
         { error: 'Voting has already started. Submissions are closed.' },
         { status: 403 }
@@ -59,20 +63,28 @@ export async function POST(req: NextRequest) {
       .collection('rooms')
       .updateOne({ roomId }, { $addToSet: { participants: nickname } })
 
-    // Count participants
-    const uniqueParticipants = await db
+    // ✅ Use expectedParticipantCount to decide when to transition
+    const submissions = await db
       .collection('submissions')
-      .distinct('nickname', { roomId })
+      .find({ roomId })
+      .toArray()
 
-    // Transition to voting if ready
-    if (uniqueParticipants.length >= 2) {
+    const uniqueSubmitted = [
+      ...new Set(submissions.map((s) => s.nickname.trim().toLowerCase())),
+    ]
+
+    if (
+      room.phase === 'submitting' &&
+      room.expectedParticipantCount &&
+      uniqueSubmitted.length >= room.expectedParticipantCount
+    ) {
       await db.collection('rooms').updateOne(
         { roomId },
         {
           $set: {
             phase: 'voting',
             deadline: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-            allowSubmissions: false, // Lock room from more entries
+            allowSubmissions: false,
           },
         }
       )

@@ -7,9 +7,10 @@ interface Room {
   title: string
   createdAt: Date
   deadline: string
-  phase: 'submitting' | 'voting' | 'results'
+  phase: 'waiting' | 'submitting' | 'voting' | 'results'
   hostNickname: string
   participants?: string[]
+  allowSubmissions: boolean
 }
 
 // GET /api/rooms?roomId=123
@@ -51,9 +52,10 @@ export async function POST(req: Request) {
       title,
       createdAt,
       deadline,
-      phase: 'submitting',
+      phase: 'waiting',
       hostNickname,
-      participants: [],
+      participants: [hostNickname],
+      allowSubmissions: false,
     }
 
     const client = await clientPromise
