@@ -2,8 +2,6 @@
 
 A fun, collaborative decision-making app to help groups choose what to eat---without the endless back-and-forth.
 
----
-
 ## Overview
 
 **Problem:** Every group has faced this dilemma---"What should we eat?"
@@ -11,8 +9,6 @@ A fun, collaborative decision-making app to help groups choose what to eat---wit
 **Solution:** Food Voter lets participants submit menu ideas, then vote on the best one in a structured, turn-based flow.
 
 I built this as a full-stack practice project to improve my skills with **Next.js** and **MongoDB**, while solving a relatable problem with a clean user experience.
-
----
 
 ## Features
 
@@ -32,13 +28,9 @@ Other key features:
 
 - Automatically shows the winner after voting ends
 
----
-
 ## Live Demo
 
 👉 [Try the app here](https://food-voter-swart.vercel.app/)
-
----
 
 ## Running the Project Locally
 
@@ -59,8 +51,6 @@ Other key features:
 
 App will be running at http://localhost:3000
 
----
-
 ## Tech Stack & Dependencies
 
 - [Next.js 15+](https://nextjs.org/)
@@ -75,30 +65,15 @@ App will be running at http://localhost:3000
 
 - SWR for data fetching
 
----
-
-## Screenshots
-
-<p align="center">
-  <img src="images/create-room-page.PNG" width="49%" />
-  <img src="images/menu-page.PNG" width="49%" />
-</p>
-
----
-
 ## ToDo
 
 - Add rematch functionality when there's a tie
 
 - Polish the UI for better visual consistency and clarity
 
----
-
 ## Contributors
 
 by [@bellhwi](https://github.com/bellhwi)
-
----
 
 ## How to Contribute
 
@@ -115,8 +90,6 @@ Want to help improve the app?
 5.  Submit a pull request
 
 Open to feature suggestions, bug reports, and UX improvements!
-
----
 
 ## 🛡️ License
 
