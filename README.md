@@ -1,4 +1,4 @@
-# Food Voter App
+# Pickle: Food Voter App
 
 A fun, collaborative decision-making app to help groups choose what to eat---without the endless back-and-forth.
 
