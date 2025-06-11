@@ -30,9 +30,9 @@ export default function QRCodeDisplay({ roomId }: { roomId: string }) {
       <p className='mt-2 text-sm text-gray-500 break-all text-center'>{url}</p>
       <button
         onClick={handleShare}
-        className='mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700'
+        className='mt-3 px-4 py-2 bg-green-800 text-white rounded hover:bg-green-900'
       >
-        Share This Link
+        Share this link
       </button>
     </div>
   )

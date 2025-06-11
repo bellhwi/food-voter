@@ -13,9 +13,9 @@ export default function SubmissionForm({
   const [menu, setMenu] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submittedMenu, setSubmittedMenu] = useState('')
   const [error, setError] = useState('')
 
-  // If no preset, try getting nickname from cookie
   useEffect(() => {
     if (!presetNickname) {
       const match = document.cookie.match(/(^| )nickname=([^;]+)/)
@@ -41,6 +41,7 @@ export default function SubmissionForm({
         document.cookie = `nickname=${encodeURIComponent(nickname)}; path=/`
       }
       setSubmitted(true)
+      setSubmittedMenu(menu) // Save the submitted menu
     } else if (res.status === 403) {
       const data = await res.json()
       setError(data.error || 'Submissions are closed.')
@@ -52,7 +53,12 @@ export default function SubmissionForm({
   }
 
   if (submitted) {
-    return <p className='mt-4 text-green-600'>Thanks for your suggestion!</p>
+    return (
+      <p className='mt-4'>
+        <strong className='text-green-600'>{submittedMenu}</strong> sounds
+        great! Waiting for others...
+      </p>
+    )
   }
 
   return (
@@ -74,7 +80,7 @@ export default function SubmissionForm({
 
       <input
         type='text'
-        placeholder='Suggested menu'
+        placeholder='What’s your pick?'
         value={menu}
         onChange={(e) => setMenu(e.target.value)}
         required
@@ -83,7 +89,7 @@ export default function SubmissionForm({
       <button
         type='submit'
         disabled={loading}
-        className='w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700'
+        className='w-full bg-green-800 text-white py-2 rounded hover:bg-green-900'
       >
         {loading ? 'Submitting...' : 'Submit'}
       </button>

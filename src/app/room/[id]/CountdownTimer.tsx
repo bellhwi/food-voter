@@ -22,5 +22,5 @@ export default function CountdownTimer({ deadline }: { deadline: string }) {
     return () => clearInterval(interval)
   }, [deadline])
 
-  return <p className='text-gray-600'>⏳ {timeLeft}</p>
+  return <p className='text-gray-400'>⏳ {timeLeft}</p>
 }

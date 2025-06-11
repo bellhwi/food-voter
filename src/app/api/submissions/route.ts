@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     const client = await clientPromise
     const db = client.db('foodvoter')
 
-    // 🔒 Check if room is locked for submissions
+    // Check if room is locked for submissions
     const room = await db.collection('rooms').findOne({ roomId })
     if (room?.allowSubmissions === false) {
       return NextResponse.json(
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 💾 Save the submission
+    // Save the submission
     await db.collection('submissions').insertOne({
       roomId,
       nickname,
@@ -54,17 +54,17 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     })
 
-    // 👥 Add participant (deduplicated)
+    // Add participant (deduplicated)
     await db
       .collection('rooms')
       .updateOne({ roomId }, { $addToSet: { participants: nickname } })
 
-    // 🔢 Count participants
+    // Count participants
     const uniqueParticipants = await db
       .collection('submissions')
       .distinct('nickname', { roomId })
 
-    // 🚦 Transition to voting if ready
+    // Transition to voting if ready
     if (uniqueParticipants.length >= 2) {
       await db.collection('rooms').updateOne(
         { roomId },
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
           $set: {
             phase: 'voting',
             deadline: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-            allowSubmissions: false, // ✅ Lock room from more entries
+            allowSubmissions: false, // Lock room from more entries
           },
         }
       )

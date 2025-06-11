@@ -59,9 +59,7 @@ export default function VoteForm({
   }
 
   const handleDeleteSubmission = async (submissionId: string) => {
-    const confirmDelete = confirm(
-      'Are you sure you want to delete this submission?'
-    )
+    const confirmDelete = confirm('Are you sure you want to delete this menu?')
     if (!confirmDelete) return
 
     const res = await fetch(`/api/submissions/${submissionId}`, {
@@ -77,7 +75,7 @@ export default function VoteForm({
   }
 
   if (submitted) {
-    return <p className='mt-4 text-green-600'>Thanks for voting!</p>
+    return <p className='mt-4'>Voted! Waiting for others...</p>
   }
 
   if (blocked) {
@@ -100,7 +98,7 @@ export default function VoteForm({
               onChange={() => setSelectedId(s.id)}
             />
             <span>{s.menu}</span>
-            <span className='text-gray-500 text-sm'>({s.nickname})</span>
+            <span className='text-gray-400 text-sm'>(by {s.nickname})</span>
           </label>
 
           {isHost && (
@@ -118,7 +116,7 @@ export default function VoteForm({
       <button
         type='submit'
         disabled={loading || !selectedId || !nickname}
-        className='w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700'
+        className='w-full bg-green-800 text-white py-2 rounded hover:bg-green-900'
       >
         {loading ? 'Submitting...' : 'Vote'}
       </button>

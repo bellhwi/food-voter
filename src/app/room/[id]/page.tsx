@@ -14,8 +14,6 @@ interface Room {
 
 type RoomPageParams = Promise<{ id: string }>
 
-// ✅ DO NOT manually type params as a Promise
-// ✅ Let Next.js handle prop types
 export default async function RoomPage({ params }: { params: RoomPageParams }) {
   const { id } = await params
 

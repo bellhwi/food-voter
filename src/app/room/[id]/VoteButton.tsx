@@ -1,4 +1,3 @@
-// src/app/room/[id]/VoteButton.tsx
 'use client'
 
 interface Props {
@@ -14,7 +13,7 @@ export default function VoteButton({ roomId, submissionId }: Props) {
       body: JSON.stringify({
         roomId,
         submissionId,
-        nickname: 'YOUR_NICKNAME', // ← 나중에 교체 가능
+        nickname: 'YOUR_NICKNAME',
       }),
     })
 

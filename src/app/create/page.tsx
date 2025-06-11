@@ -29,13 +29,14 @@ export default function CreatePage() {
 
   return (
     <main className='max-w-md mx-auto p-6'>
-      <h1 className='text-2xl font-bold mb-4'>Create a New Room</h1>
+      <h1 className='text-2xl font-bold'>Pickle</h1>
+      <p className='mt-2 mb-4'>Skip chaos. Vote fair. Eat happy.</p>
       <form onSubmit={handleSubmit} className='space-y-4'>
         <input
           type='text'
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="What's the vote about?"
+          placeholder='Room title (e.g., "Lunch Drama")'
           className='w-full p-2 border rounded'
         />
         <input
@@ -47,9 +48,9 @@ export default function CreatePage() {
         />
         <button
           type='submit'
-          className='w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700'
+          className='w-full bg-green-800 text-white py-2 rounded hover:bg-green-900'
         >
-          Create Room
+          Create your Pickle
         </button>
       </form>
     </main>

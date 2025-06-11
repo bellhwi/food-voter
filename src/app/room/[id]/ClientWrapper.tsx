@@ -134,7 +134,7 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
             />
             <button
               onClick={handleTitleUpdate}
-              className='ml-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700'
+              className='ml-2 px-3 py-1 bg-green-800 text-white rounded hover:bg-green-900'
             >
               Save
             </button>
@@ -150,7 +150,7 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
             {room.title}{' '}
             {isHost && room.phase === 'submitting' && (
               <button
-                className='ml-2 text-sm text-blue-600 hover:underline'
+                className='ml-2 text-sm text-green-600 hover:underline'
                 onClick={() => {
                   setNewTitle(room.title)
                   setEditMode(true)
@@ -170,12 +170,6 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
         />
       )}
 
-      {room.phase === 'submitting' && isHost && (
-        <p className='text-gray-600 italic mb-6'>
-          Waiting for others to submit their menus...
-        </p>
-      )}
-
       {room.phase === 'voting' && (
         <VoteForm
           roomId={roomId}
@@ -187,47 +181,34 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
 
       {room.phase === 'results' && (
         <div className='mt-6 space-y-6'>
-          <p className='text-green-600 font-semibold'>Voting ended! 🎉</p>
+          <p className='font-semibold'>
+            🏆 <span className='text-green-600'>{winner?.menu}</span> it is!
+          </p>
           {sortedResults.length === 0 ? (
             <p className='text-gray-500 mt-2'>No votes submitted.</p>
           ) : (
-            <>
-              <div className='p-4 border rounded bg-yellow-50'>
-                <p className='text-lg font-bold'>🏆 Winner:</p>
-                <p className='mt-1'>
-                  {winner.menu}{' '}
-                  <span className='text-sm text-gray-500'>
-                    by {winner.nickname}
-                  </span>
-                </p>
-                <p className='text-sm text-gray-700'>
-                  {winner.votes} vote{winner.votes === 1 ? '' : 's'}
-                </p>
-              </div>
-
-              <div className='space-y-3'>
-                <h2 className='font-semibold text-lg'>All Results</h2>
-                {sortedResults.map((s) => (
-                  <div
-                    key={s.id}
-                    className='border p-3 rounded bg-white shadow-sm'
-                  >
-                    <p className='font-medium'>{s.menu}</p>
-                    <p className='text-sm text-gray-500'>by {s.nickname}</p>
-                    <p className='text-sm text-gray-700 mt-1'>
-                      {s.votes} vote{s.votes === 1 ? '' : 's'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </>
+            <div className='space-y-3'>
+              <h2 className='font-semibold text-lg'>All Results</h2>
+              {sortedResults.map((s, index) => (
+                <div key={s.id}>
+                  <p>{s.menu}</p>
+                  <p className='text-gray-400'>by {s.nickname}</p>
+                  <p className='text-gray-400'>
+                    {s.votes} vote{s.votes === 1 ? '' : 's'}
+                  </p>
+                  {index < sortedResults.length - 1 && (
+                    <hr className='my-2 text-gray-800' />
+                  )}
+                </div>
+              ))}
+            </div>
           )}
           <div className='text-center'>
             <button
               onClick={() => (window.location.href = '/create')}
-              className='mt-6 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700'
+              className='mt-6 bg-green-800 text-white px-4 py-2 rounded hover:bg-green-900'
             >
-              Create New Room
+              One more round?
             </button>
           </div>
         </div>
