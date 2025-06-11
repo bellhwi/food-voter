@@ -265,7 +265,7 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
               }}
               disabled={room.participants.length < 1}
             >
-              Let's start
+              Let&apos;s start
             </button>
           )}
         </div>
