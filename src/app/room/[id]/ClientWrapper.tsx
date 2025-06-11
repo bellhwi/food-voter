@@ -49,23 +49,40 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
   const { data: room, error: roomError } = useSWR<Room>(
     roomId ? `/api/rooms?roomId=${roomId}` : null,
     safeFetcher,
-    { refreshInterval: 3000 }
+    {
+      refreshInterval: (latestRoom: Room | undefined) =>
+        ['waiting', 'submitting', 'voting'].includes(latestRoom?.phase || '')
+          ? 1000
+          : 0,
+      dedupingInterval: 500,
+    }
   )
 
   const { data: submissions, error: subError } = useSWR<Submission[]>(
     room ? `/api/submissions?roomId=${roomId}` : null,
     safeFetcher,
-    { refreshInterval: room?.phase !== 'results' ? 3000 : 0 }
+    {
+      refreshInterval: () =>
+        ['waiting', 'submitting', 'voting'].includes(room?.phase || '')
+          ? 1000
+          : 0,
+      dedupingInterval: 500,
+    }
   )
 
   const { data: voteCounts, error: voteError } = useSWR<VoteCounts>(
     room ? `/api/votes?roomId=${roomId}` : null,
     safeFetcher,
-    { refreshInterval: room?.phase !== 'results' ? 3000 : 0 }
+    {
+      refreshInterval: () =>
+        ['waiting', 'submitting', 'voting'].includes(room?.phase || '')
+          ? 1000
+          : 0,
+      dedupingInterval: 500,
+    }
   )
 
   const { nickname, setNickname } = useNicknameStore()
-  const isHost = nickname === room?.hostNickname
   const [editMode, setEditMode] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [hasClickedReady, setHasClickedReady] = useState(false)
@@ -114,6 +131,8 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
   if (roomError || subError || voteError)
     return <p className='text-red-500'>Failed to load data.</p>
   if (!room || !submissions || !voteCounts) return <p>Loading...</p>
+
+  const isHost = nickname === room.hostNickname
 
   const sortedResults = submissions
     .map((s) => ({ ...s, votes: voteCounts[s.id] || 0 }))
@@ -211,7 +230,7 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
                   }
                 }}
               >
-                I’m Ready
+                I’m ready
               </button>
             </>
           )}
@@ -246,7 +265,7 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
               }}
               disabled={room.participants.length < 1}
             >
-              Start
+              Let's start
             </button>
           )}
         </div>
