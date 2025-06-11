@@ -67,8 +67,6 @@ App will be running at http://localhost:3000
 
 ## ToDo
 
-- Add rematch functionality when there's a tie
-
 - Polish the UI for better visual consistency and clarity
 
 ## Contributors

@@ -307,8 +307,16 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
       {room.phase === 'results' && (
         <div className='mt-6 space-y-6'>
           <p className='font-semibold'>
-            🏆 <span className='text-green-600'>{winner?.menu}</span> it is!
+            {sortedResults.length > 1 &&
+            sortedResults[0].votes === sortedResults[1].votes ? (
+              <>⚠️ It’s a tie!</>
+            ) : (
+              <>
+                🏆 <span className='text-green-600'>{winner?.menu}</span> it is!
+              </>
+            )}
           </p>
+
           {sortedResults.length === 0 ? (
             <p className='text-gray-500 mt-2'>No votes submitted.</p>
           ) : (
