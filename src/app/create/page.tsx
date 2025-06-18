@@ -41,7 +41,9 @@ export default function CreatePage() {
   return (
     <main className='max-w-md mx-auto p-6'>
       <h1 className='text-2xl font-bold'>Food Voter</h1>
-      <p className='mt-2 mb-4'>End "What are we eating?" in a few minutes.</p>
+      <p className='mt-2 mb-4'>
+        End &quot;What are we eating?&quot; in a few minutes.
+      </p>
       <form onSubmit={handleSubmit} className='space-y-4'>
         <input
           type='text'

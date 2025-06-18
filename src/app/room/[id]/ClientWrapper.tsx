@@ -83,7 +83,6 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
   )
 
   const { nickname, setNickname } = useNicknameStore()
-  const [newTitle, setNewTitle] = useState('')
   const [hasClickedReady, setHasClickedReady] = useState(false)
   const [localNickname, setLocalNickname] = useState(nickname)
 
@@ -92,38 +91,6 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
       setHasClickedReady(true)
     }
   }, [room, nickname])
-
-  const handleTitleUpdate = async () => {
-    if (!newTitle.trim() || !nickname) {
-      alert('Nickname is missing.')
-      return
-    }
-
-    try {
-      const res = await fetch('/api/rooms', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId, newTitle, nickname }),
-      })
-
-      const text = await res.text()
-      if (!res.ok) {
-        console.error('PUT /api/rooms failed:', text)
-        alert('Server error: ' + text)
-        return
-      }
-
-      const data = JSON.parse(text)
-      if (!data.success) {
-        alert('Update failed. Try again later.')
-        return
-      }
-      mutate(`/api/rooms?roomId=${roomId}`)
-    } catch (err) {
-      console.error('handleTitleUpdate error:', err)
-      alert('Something went wrong.')
-    }
-  }
 
   if (roomError || subError || voteError)
     return <p className='text-red-500'>Failed to load data.</p>

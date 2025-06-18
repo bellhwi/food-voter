@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { mutate } from 'swr'
 import { useNicknameStore } from '@/stores/nicknameStore'
 
 interface Props {
@@ -11,12 +10,7 @@ interface Props {
   roomPhase: 'submitting' | 'voting' | 'results'
 }
 
-export default function VoteForm({
-  submissions,
-  roomId,
-  hostNickname,
-  roomPhase,
-}: Props) {
+export default function VoteForm({ submissions, roomId, roomPhase }: Props) {
   const nickname = useNicknameStore((state) => state.nickname)
   const [selectedId, setSelectedId] = useState('')
   const [loading, setLoading] = useState(false)
@@ -43,8 +37,6 @@ export default function VoteForm({
       setBlocked(true)
     }
   }, [roomPhase, submissions, nickname])
-
-  const isHost = nickname === hostNickname
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
