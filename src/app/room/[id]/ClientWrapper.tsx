@@ -82,6 +82,16 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
     }
   )
 
+  const { data: voteRecords } = useSWR<
+    { nickname: string; submissionId: string }[]
+  >(room ? `/api/voteRecords?roomId=${roomId}` : null, safeFetcher, {
+    refreshInterval: () =>
+      ['waiting', 'submitting', 'voting'].includes(room?.phase || '')
+        ? 1000
+        : 0,
+    dedupingInterval: 500,
+  })
+
   const { nickname, setNickname } = useNicknameStore()
   const [hasClickedReady, setHasClickedReady] = useState(false)
   const [localNickname, setLocalNickname] = useState(nickname)
@@ -224,12 +234,35 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
       )}
 
       {room.phase === 'voting' && (
-        <VoteForm
-          roomId={roomId}
-          submissions={submissions}
-          hostNickname={room.hostNickname}
-          roomPhase={room.phase}
-        />
+        <>
+          {room.phase === 'voting' &&
+            room.expectedParticipantCount &&
+            voteRecords && (
+              <div className='mb-4 text-center'>
+                <p className='text-sm text-gray-500 mb-1'>
+                  {voteRecords.length} of {room.expectedParticipantCount} votes
+                  submitted
+                </p>
+                <div className='w-full bg-gray-200 rounded-full h-2 max-w-md mx-auto'>
+                  <div
+                    className='bg-green-600 h-2 rounded-full transition-all duration-300'
+                    style={{
+                      width: `${
+                        (voteRecords.length / room.expectedParticipantCount) *
+                        100
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          <VoteForm
+            roomId={roomId}
+            submissions={submissions}
+            hostNickname={room.hostNickname}
+            roomPhase={room.phase}
+          />
+        </>
       )}
 
       {room.phase === 'results' && (
