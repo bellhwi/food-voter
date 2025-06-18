@@ -40,8 +40,8 @@ export default function CreatePage() {
 
   return (
     <main className='max-w-md mx-auto p-6'>
-      <h1 className='text-2xl font-bold'>Pickle</h1>
-      <p className='mt-2 mb-4'>Skip chaos. Vote fair. Eat happy.</p>
+      <h1 className='text-2xl font-bold'>Food Voter</h1>
+      <p className='mt-2 mb-4'>End "What are we eating?" in a few minutes.</p>
       <form onSubmit={handleSubmit} className='space-y-4'>
         <input
           type='text'
@@ -62,9 +62,19 @@ export default function CreatePage() {
           className='w-full bg-green-800 text-white py-2 rounded hover:bg-green-900 disabled:opacity-50'
           disabled={loading}
         >
-          {loading ? 'Creating...' : 'Create your Pickle'}
+          {loading ? 'Creating...' : 'Create new room'}
         </button>
       </form>
+      <div className='text-gray-400'>
+        <p className='mt-4 font-bold'>How it works?</p>
+        <ol className='list-decimal ml-4'>
+          <li>Create a new room</li>
+          <li>Invite your hungry friends/family</li>
+          <li>Submit a food you&apos;re craving</li>
+          <li>Vote the food</li>
+          <li>Eat happy</li>
+        </ol>
+      </div>
     </main>
   )
 }

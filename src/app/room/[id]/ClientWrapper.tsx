@@ -244,29 +244,34 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
 
           {/* Host Start Voting Button */}
           {isHost && (
-            <button
-              className={`mt-4 px-4 py-2 rounded text-white transition ${
-                room.participants.length < 1
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-green-800 hover:bg-green-900'
-              }`}
-              onClick={async () => {
-                const res = await fetch('/api/rooms/start', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ roomId, nickname }),
-                })
-                if (res.ok) {
-                  mutate(`/api/rooms?roomId=${roomId}`)
-                } else {
-                  const err = await res.json()
-                  alert(err.error || 'Failed to start voting.')
-                }
-              }}
-              disabled={room.participants.length < 1}
-            >
-              Let&apos;s start
-            </button>
+            <>
+              <button
+                className={`mt-4 px-4 py-2 rounded text-white transition ${
+                  room.participants.length < 1
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-green-800 hover:bg-green-900'
+                }`}
+                onClick={async () => {
+                  const res = await fetch('/api/rooms/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roomId, nickname }),
+                  })
+                  if (res.ok) {
+                    mutate(`/api/rooms?roomId=${roomId}`)
+                  } else {
+                    const err = await res.json()
+                    alert(err.error || 'Failed to start voting.')
+                  }
+                }}
+                disabled={room.participants.length < 1}
+              >
+                Let&apos;s start
+              </button>
+              <p className='mt-2 text-sm text-gray-600'>
+                Wait until everyone's ready, then press start.
+              </p>
+            </>
           )}
         </div>
       )}

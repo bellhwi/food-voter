@@ -55,7 +55,7 @@ export default function SubmissionForm({ roomId }: { roomId: string }) {
       <form onSubmit={handleSubmit} className='space-y-4'>
         <input
           type='text'
-          placeholder='What’s your pick?'
+          placeholder='What are you craving?'
           value={menu}
           onChange={(e) => setMenu(e.target.value)}
           required

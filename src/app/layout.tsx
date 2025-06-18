@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Pickle',
-  description: 'When your group’s in a pickle, let the best idea win.',
+  title: 'Food Voter',
+  description: 'End "What are we eating?" in a few minutes.',
 }
 
 export default function RootLayout({
