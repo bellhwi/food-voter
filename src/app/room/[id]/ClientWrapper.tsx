@@ -83,7 +83,6 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
   )
 
   const { nickname, setNickname } = useNicknameStore()
-  const [editMode, setEditMode] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [hasClickedReady, setHasClickedReady] = useState(false)
   const [localNickname, setLocalNickname] = useState(nickname)
@@ -119,8 +118,6 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
         alert('Update failed. Try again later.')
         return
       }
-
-      setEditMode(false)
       mutate(`/api/rooms?roomId=${roomId}`)
     } catch (err) {
       console.error('handleTitleUpdate error:', err)
@@ -144,47 +141,6 @@ export default function ClientWrapper({ roomId }: { roomId: string }) {
     <>
       {room.phase === 'voting' && <CountdownTimer deadline={room.deadline} />}
       {room.phase === 'waiting' && <QRCodeDisplay roomId={room.roomId} />}
-
-      {/* Title & Edit Section */}
-      <div className='flex justify-between items-center mt-6 mb-4'>
-        {isHost && editMode && room.phase === 'submitting' ? (
-          <>
-            <input
-              type='text'
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              className='border px-2 py-1 rounded w-full max-w-md'
-            />
-            <button
-              onClick={handleTitleUpdate}
-              className='ml-2 px-3 py-1 bg-green-800 text-white rounded hover:bg-green-900'
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setEditMode(false)}
-              className='ml-2 px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400'
-            >
-              Cancel
-            </button>
-          </>
-        ) : (
-          <h1 className='text-xl font-bold'>
-            {room.title}{' '}
-            {isHost && room.phase === 'submitting' && (
-              <button
-                className='ml-2 text-sm text-green-600 hover:underline'
-                onClick={() => {
-                  setNewTitle(room.title)
-                  setEditMode(true)
-                }}
-              >
-                ✏️ Edit
-              </button>
-            )}
-          </h1>
-        )}
-      </div>
 
       {/* Show participants & Start Voting */}
       {room.phase === 'waiting' && (

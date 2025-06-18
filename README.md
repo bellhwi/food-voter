@@ -12,21 +12,15 @@ I built this as a full-stack practice project to improve my skills with **Next.j
 
 ## Features
 
-✅ Create – Make a room with a title and deadline
+✅ Make a room with a title and deadline
 
-✅ Read – Real-time display of submitted menus and live voting results
+✅ Real-time display of submitted menus and live voting results
 
-✅ Update – Edit room title (host-only)
+✅ Participants submit menus with nicknames
 
-✅ Delete – Host can delete duplicate submissions
+✅ Voting phase starts after all menus are submitted
 
-Other key features:
-
-- Participants submit menus with nicknames
-
-- Voting phase starts after all menus are submitted
-
-- Automatically shows the winner after voting ends
+✅ Automatically shows the winner after voting ends
 
 ## Live Demo
 

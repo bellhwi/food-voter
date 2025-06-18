@@ -61,22 +61,6 @@ export default function VoteForm({
     setLoading(false)
   }
 
-  const handleDeleteSubmission = async (submissionId: string) => {
-    const confirmDelete = confirm('Are you sure you want to delete this menu?')
-    if (!confirmDelete) return
-
-    const res = await fetch(`/api/submissions/${submissionId}`, {
-      method: 'DELETE',
-    })
-
-    if (!res.ok) {
-      alert('Failed to delete submission.')
-      return
-    }
-
-    mutate(`/api/rooms/${roomId}`)
-  }
-
   if (submitted) {
     return <p className='mt-4'>Voted! Waiting for others...</p>
   }
@@ -103,16 +87,6 @@ export default function VoteForm({
             <span>{s.menu}</span>
             <span className='text-gray-400 text-sm'>(by {s.nickname})</span>
           </label>
-
-          {isHost && (
-            <button
-              type='button'
-              onClick={() => handleDeleteSubmission(s.id)}
-              className='text-red-600 text-sm underline hover:text-red-800'
-            >
-              Delete
-            </button>
-          )}
         </div>
       ))}
 
